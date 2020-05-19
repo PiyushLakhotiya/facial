@@ -3,7 +3,7 @@ const bodyParser     = require('body-parser');
 const express        = require('express');
 const multer         = require('multer');
 const path           = require('path');
-
+const spawn          = require('child_process').spawn;
 const app            = express();
 
 app.use(bodyParser.urlencoded({extended: true}));
@@ -48,7 +48,7 @@ function checkFileType(file, cb){
 //
 
 app.get('/', (req, res) => {
-    res.send('HI There!!!');
+    res.sendFile(__dirname + '/views/front.html');
 });
 
 app.get('/index', (req, res) => {
@@ -67,15 +67,27 @@ app.post('/index',  (req, res) => {
                 } else {
                     console.log('File uploaded');
                     a = req.file.originalname;
+                    var dataToSend;
+                    // spawn new child process to call the python script
+                    const python = spawn('python', ['script.py', a ]);
+                    // collect data from script
+                    python.stdout.on('data', function (data) {
+                    //console.log('Pipe data from python script ...');
+                    dataToSend = data.toString();
+                    });
+                    // in close event we are sure that stream from child process is closed
+                    python.on('close', (code) => {
+                    //console.log(`child process close all stdio with code ${code}`);
+                    // send data to browser
                     res.redirect('/result');
+                    });
                 }
             }
         });
     });
     uploading
     .then( a => {
-        
-        // console.log(a);
+            
     });
 });
 
